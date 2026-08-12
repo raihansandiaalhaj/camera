@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Deteksi Objek Hilang</title>
+</head>
+<body>
+    <video id="video" autoplay playsinline width="320"></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <h2 id="status">Menunggu Kamera...</h2>
+
+<script>
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const statusText = document.getElementById("status");
+
+let reference = null;
+
+navigator.mediaDevices.getUserMedia({ video: true })
+.then(stream => {
+    video.srcObject = stream;
+
+    setTimeout(() => {
+        captureReference();
+        setInterval(checkDifference, 1000);
+    }, 3000);
+});
+
+function captureReference() {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0);
+    reference = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    statusText.textContent = "Referensi Disimpan";
+}
+
+function checkDifference() {
+    ctx.drawImage(video, 0, 0);
+    const current = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+    let diff = 0;
+
+    for(let i = 0; i < current.data.length; i += 4) {
+        diff += Math.abs(current.data[i] - reference.data[i]);
+    }
+
+    if(diff > 5000000) {
+        statusText.textContent = "⚠ Ada Perubahan Besar!";
+    } else {
+        statusText.textContent = "✅ Objek Masih Ada";
+    }
+}
+</script>
+</body>
+</html>
